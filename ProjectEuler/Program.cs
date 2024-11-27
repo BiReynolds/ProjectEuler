@@ -22,6 +22,13 @@ public class ProjectEuler {
             currProblem.ShowSolution();
             stopwatch.Stop();
             Console.WriteLine($"Answer found in {stopwatch.ElapsedMilliseconds} milliseconds!");
+            Console.WriteLine("Press a to see another problem, or any other key to exit program.");
+            char pressedKey = Console.ReadKey().KeyChar;
+            if (pressedKey == 'a') {
+                stopwatch.Reset();
+                Console.WriteLine();
+                Main(args);
+            }
             //Restore warnings
             #pragma warning restore CS8602 // Dereference of a possibly null reference.
             #pragma warning restore CS8604 // Possible null reference argument.
