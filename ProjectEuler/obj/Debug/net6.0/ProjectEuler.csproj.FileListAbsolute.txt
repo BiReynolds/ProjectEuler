@@ -1,0 +1,15 @@
+H:\ProjectEuler\ProjectEuler\obj\Debug\net6.0\ProjectEuler.csproj.AssemblyReference.cache
+H:\ProjectEuler\ProjectEuler\obj\Debug\net6.0\ProjectEuler.GeneratedMSBuildEditorConfig.editorconfig
+H:\ProjectEuler\ProjectEuler\obj\Debug\net6.0\ProjectEuler.AssemblyInfoInputs.cache
+H:\ProjectEuler\ProjectEuler\obj\Debug\net6.0\ProjectEuler.AssemblyInfo.cs
+H:\ProjectEuler\ProjectEuler\obj\Debug\net6.0\ProjectEuler.csproj.CoreCompileInputs.cache
+H:\ProjectEuler\ProjectEuler\bin\Debug\net6.0\ProjectEuler.exe
+H:\ProjectEuler\ProjectEuler\bin\Debug\net6.0\ProjectEuler.deps.json
+H:\ProjectEuler\ProjectEuler\bin\Debug\net6.0\ProjectEuler.runtimeconfig.json
+H:\ProjectEuler\ProjectEuler\bin\Debug\net6.0\ProjectEuler.dll
+H:\ProjectEuler\ProjectEuler\bin\Debug\net6.0\ProjectEuler.pdb
+H:\ProjectEuler\ProjectEuler\obj\Debug\net6.0\ProjectEuler.dll
+H:\ProjectEuler\ProjectEuler\obj\Debug\net6.0\refint\ProjectEuler.dll
+H:\ProjectEuler\ProjectEuler\obj\Debug\net6.0\ProjectEuler.pdb
+H:\ProjectEuler\ProjectEuler\obj\Debug\net6.0\ProjectEuler.genruntimeconfig.cache
+H:\ProjectEuler\ProjectEuler\obj\Debug\net6.0\ref\ProjectEuler.dll
