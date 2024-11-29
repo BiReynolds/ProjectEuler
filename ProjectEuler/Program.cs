@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Numerics;
 
 public class ProjectEuler {
     public static Stopwatch stopwatch = new Stopwatch();
@@ -32,7 +31,7 @@ public class ProjectEuler {
             //Restore warnings
             #pragma warning restore CS8602 // Dereference of a possibly null reference.
             #pragma warning restore CS8604 // Possible null reference argument.
-        } catch {
+        } catch{
             Console.WriteLine("Invalid problem number. Please ensure your entry is a positive integer between 1 and 50");
             Main(args);
         }
@@ -871,5 +870,241 @@ public class Problem15 : Problem
             result *= (N+i)/i;
         }
         Console.WriteLine(result.ToString("0."));
+    }
+}
+
+public class Problem16 : Problem
+{
+    public override void ShowProblemStatement()
+    {
+        Console.WriteLine("2^15 = 32768 and the sum of its digits 3 + 2 + 7 + 6 + 8 = 26.");
+        Console.WriteLine("What is the sum of the digits of the number 2^1000");
+    }
+
+    public override void ShowSolution()
+    {
+        // Again, the math here is not technically difficult, but the scale on which we are doing the calculation presents a challenge (2^1000 is over 300 digits long).
+        // Because we are only ever doing the same simple calculation, and we mainly care about the digits anyways, we use an array to represent our number and simulate
+        // doubling the number by editing the digits accordingly.  
+        int[] digits = new int[302]; // (302 comes from the fact that 2^1000 has ceil(1000*log(2)) = 302 digits)
+        int currPower = 0;
+        digits[0] = 1;  // Initialize our digits variable to represent the number 1 (where the digit in the 1's place is 1 and all other digits are 0)
+        while (currPower < 1000) {
+            for (int i = 0; i < 302; i++) {
+                digits[i] += digits[i];
+            }
+            for (int j = 0; j < 302; j++) {
+                if (digits[j] >= 10) {
+                    digits[j] -= 10;
+                    digits[j+1] += 1;
+                }
+            }
+            currPower += 1;
+        }
+        Console.WriteLine(digits.Sum());
+    }
+}
+
+public class Problem17 : Problem
+{
+    Dictionary<int,int> NumLettersUnder20 = new Dictionary<int, int>{
+        {0,0}, // if a digit is 0, we would just skip it
+        {1,3}, // "one" = 3 letters
+        {2,3}, // "two" = 3 letters
+        {3,5}, // "three" = 5 letters
+        {4,4}, // etc.
+        {5,4},
+        {6,3},
+        {7,5},
+        {8,5},
+        {9,4},
+        {10,3},
+        {11,6},
+        {12,6},
+        {13,8},
+        {14,8},
+        {15,7},
+        {16,7},
+        {17,9},
+        {18,8},
+        {19,8}
+    };
+    Dictionary<int,int> TensPlaceByDigit = new Dictionary<int, int>{
+        {2,6}, // "twenty" = 6 letters
+        {3,6}, // "thirty" = 6 letters
+        {4,5}, // etc.
+        {5,5},
+        {6,5},
+        {7,7},
+        {8,6},
+        {9,6}
+    };
+    public override void ShowProblemStatement()
+    {
+        Console.WriteLine("If the numbers 1 to 5 are written out in words (one, two, three, four, five) then there are 3+3+5+4+4 = 19 letters used in the total.");
+        Console.WriteLine("If all the numbers from 1 to 1000 inclusive were written out in words, how many letters would be used?");
+        Console.WriteLine("NOTE: Do not count spaces or hyphens.  For example, 342 (three hundred and forty-two) contains 23 letters");
+    }
+
+    public override void ShowSolution()
+    {
+        // All numbers between 20 and 999 are of the form "[XXXX hundred and ] [YYYY-ty] [XXXXX]", where XXXXXX would be the word for a non-zero digit, and YYYY represents the prefix
+        // for the tens place word (twen-ty, thir-ty, for-ty...).  Of course, if any place (ones, tens or hundreds) 's digit is 0, we skip that part of the word.  
+        // I'd say the trickiest part is getting the last two digits right, since the hundres place adds a pretty consistent wording at the front of the word.  Because of this, we'll
+        // break the ones and tens letter count into its own function, which will be used in the function that counts letters in numbers < 1000. 
+        int letterSum = 0;
+        for (int i = 1; i <= 999; i++) {
+            letterSum += NumLettersUnder1000(i);
+        }
+        letterSum += 11; // we just treat "one thousand" separately
+        Console.WriteLine(letterSum);
+    }
+
+    public int NumLettersUnder1000(int N) {
+        if (N < 100) {
+            return NumLettersUnder100(N);
+        }
+        else if (N % 100 == 0) {
+            // If a multiple of a hundred, it's just [hundreds digit] "hundred"
+            return NumLettersUnder20[N/100] + 7;
+        }
+        else {
+            // if N >= 100, then it's of the form [hundreds digit] "hundred and" [rest of number]
+            return NumLettersUnder20[N/100] + 10 + NumLettersUnder100(N % 100);
+        }
+    }
+
+    public int NumLettersUnder100(int N) {
+        if (N < 20) {
+            return NumLettersUnder20[N];
+        } 
+        else {
+            return TensPlaceByDigit[N/10] + NumLettersUnder20[N%10];
+        }
+    }
+}
+
+public class Problem18 : Problem
+{
+    string rawExampleData = @"3
+7 4
+2 4 6
+8 5 9 3";
+    string rawProblemData = @"75
+95 64
+17 47 82
+18 35 87 10
+20 04 82 47 65
+19 01 23 75 03 34
+88 02 77 73 07 63 67
+99 65 04 28 06 16 70 92
+41 41 26 56 83 40 80 70 33
+41 48 72 33 47 32 37 16 94 29
+53 71 44 65 25 43 91 52 97 51 14
+70 11 33 28 77 73 17 78 39 68 17 57
+91 71 52 38 17 14 91 43 58 50 27 29 48
+63 66 04 68 89 53 67 30 73 16 69 87 40 31
+04 62 98 27 23 09 70 98 73 93 38 53 60 04 23";
+    int[][] exampleTriangle = new int[4][];
+    int[][] problemTriangle = new int[15][];
+    public override void ShowProblemStatement()
+    {
+        // If we were lazy and didn't care much about readability / extendability we could probably do this with much fewer lines than we use here.  But... I like the explanations
+        // and answers to look a little prettier 
+        exampleTriangle = JaggedArrayFromString(rawExampleData);
+        problemTriangle = JaggedArrayFromString(rawProblemData);
+        Console.WriteLine("By starting at the top of the triangle below and moving to adjacent numbers on the row below, the maximum total from top to bottom is 23.");
+        PrintTriangle(exampleTriangle);
+        Console.WriteLine("That is, 3+7+4+9 = 23");
+        Console.WriteLine("Find the maximum total from top to bottom of the triangle below:");
+        PrintTriangle(problemTriangle);
+    }
+
+    public override void ShowSolution()
+    {
+        // As mentioned in the problem's statement on the Project Euler website, we could brute force this, but it is better to write it in a way that is efficient as later problems
+        // will present similar problems with much more data to parse.  
+        // A slight reframing of the problem makes it a little more obvious how we can save ourselves some trouble.  Let's pick a particular number on the bottom row, and ask 
+        // "what is the path from the top to this particular number which produces the largest sum?"  Doing this for each number in the bottom row, we can then just take the maximum
+        // Now, answering the updated question.  Let's pick a particular number in the bottom row; say, 09.  There are only two possible numbers we could have been at in row 14
+        // to end up at that spot in row 15; namely the 89 and 53 that are just above it.  So the optimal path to 09 is the better of the following options: the optimal path to 89
+        // plus the step from 89 to 09, or the optimal path to 53 plus the step from 53 to 09.  This encourages the approach below, where we start at the top and just keep track of
+        // the BEST sum up to each position, and get the next row's best sum using that info.  
+        
+        int currRow = 0;
+        int[] partialSumsCurrRow = new int[1];
+        partialSumsCurrRow[0] = 75;
+        int[] partialSumsNextRow; 
+
+        while (currRow < 14) {
+            currRow += 1; 
+            partialSumsNextRow = new int[currRow + 1];
+            // First col is a special case, since it only has one possible starting point from the previous row
+            partialSumsNextRow[0] = partialSumsCurrRow[0] + problemTriangle[currRow][0];
+            for (int i = 1; i < currRow; i++) {
+                partialSumsNextRow[i] = Math.Max(partialSumsCurrRow[i-1],partialSumsCurrRow[i]) + problemTriangle[currRow][i];
+            }
+            // Last col is a special case, since it only has one possible starting point from the previous row
+            partialSumsNextRow[currRow] = partialSumsCurrRow[currRow-1] + problemTriangle[currRow][currRow];
+            partialSumsCurrRow = partialSumsNextRow;
+        }
+
+        Console.WriteLine(partialSumsCurrRow.Max());
+    }
+
+    // This method is meant to take a big ugly string and turn it into a jagged array of numbers.  For this particular problem, that jagged array will represent the triangle(s).
+    // The format has to be particular for this to work... newlines are treated as the separator for rows of our string, while spaces are for columns.  
+    public int[][] JaggedArrayFromString(string data, char rowSeparator = '\n', char dataSeparator = ' ') {
+        string[] dataSplitByRows = data.Split(rowSeparator);
+        int[][] result = new int[dataSplitByRows.Length][];
+
+        string[] rowStrings;
+        int[] newRow;
+        for (int i = 0; i < dataSplitByRows.Length; i++) {
+            rowStrings = dataSplitByRows[i].Split(dataSeparator);
+            newRow = new int[rowStrings.Length];
+            for (int j = 0; j < rowStrings.Length; j++) {
+                newRow[j] = Convert.ToInt32(rowStrings[j]);
+            }
+            result[i] = newRow;
+        }
+        return result;
+    }
+
+    // These two functions are only here to print the triangles to the screen in a pretty way; they have nothing at all to do with solving the problem :) 
+    public void PrintTriangle(int[][] triangleData, int numDigits = 2) {
+        int numRows = triangleData.Length;
+
+        int numSpaces = 2 * numDigits * numRows;
+        foreach (int[] row in triangleData) {
+            string baseString = "";
+            foreach (int point in row) {
+                string newStuff = point.ToString();
+                if (newStuff.Length < numDigits) {
+                    newStuff = new string('0',numDigits-newStuff.Length) + newStuff;
+                }
+                baseString += newStuff;
+                baseString += new string(' ',numDigits);
+            }
+            Console.WriteLine(CenteredString(baseString,numSpaces));
+        }
+    }
+
+    public string CenteredString(string baseString, int desiredWidth) {
+        string sidePadding = new string(' ',(desiredWidth - baseString.Length) / 2);
+        return sidePadding + baseString;
+    }
+}
+
+public class Problem19 : Problem
+{
+    public override void ShowProblemStatement()
+    {
+        throw new NotImplementedException();
+    }
+
+    public override void ShowSolution()
+    {
+        throw new NotImplementedException();
     }
 }
