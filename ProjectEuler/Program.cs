@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.IO;
 
 public class ProjectEuler {
     public static Stopwatch stopwatch = new Stopwatch();
@@ -31,8 +32,9 @@ public class ProjectEuler {
             //Restore warnings
             #pragma warning restore CS8602 // Dereference of a possibly null reference.
             #pragma warning restore CS8604 // Possible null reference argument.
-        } catch{
+        } catch (Exception err){
             Console.WriteLine("Invalid problem number. Please ensure your entry is a positive integer between 1 and 50");
+            Console.WriteLine(err);
             Main(args);
         }
     }
@@ -1100,11 +1102,504 @@ public class Problem19 : Problem
 {
     public override void ShowProblemStatement()
     {
-        throw new NotImplementedException();
+        Console.WriteLine("You are given the following information to help with the following question...");
+        Console.WriteLine("- 1 Jan 1900 was a Monday.");
+        Console.WriteLine("- Thirty days has September");
+        Console.WriteLine("  April, June and November.");
+        Console.WriteLine("  All the rest have thirty-one,");
+        Console.WriteLine("  Saving February alone,");
+        Console.WriteLine("  Which has twenty-eight, rain or shine.");
+        Console.WriteLine("  And on leap years, twenty-nine.");
+        Console.WriteLine("- A leap year occurs on any year evenly divisible by 4, but NOT on a century, UNLESS it is divisible by 400.\n");
+        Console.WriteLine("How many Sundays fell on the first of the month during the twentieth century (1 Jan 1901 to 31 Dec 2000)?");
     }
 
     public override void ShowSolution()
     {
-        throw new NotImplementedException();
+        // If we are allowed to use date/calendar namespaces, this problem becomes a bit shallow, so we won't.  
+        // Of course, we don't need to check every single date, only the 1st of each month in the date range.  We also only need to keep track of the weekday, which is simple 
+        // if we use some modular arithmetic.  From the first fact, we know 1 Jan 1900 was a Monday, and 1900 is not a leap-year, so 1 Jan 1901 is 365 days later.  365 (mod 7) is 
+        // 1, so we've moved 1 weekday later, and so Jan 1 1901 is a Tuesday.  From there the program will do the rest... 
+        int currYear = 1901;
+        int currMonth = 1;    // Jan = 1, Feb = 2, etc. 
+        int currWeekDay = 2;  // For our purposes, Sunday = 0, Monday = 1, Tuesday = 2, etc. 
+        int numSundaysOn1st = 0;
+        while (currYear <= 2000) {
+            if (currWeekDay == 0) {
+                numSundaysOn1st += 1;
+            }
+            // This moves to the next 1st of the month.  Switch statement is probably not the most elegant solution, but gets the job done
+            switch (currMonth) {
+                case 1:
+                case 3:
+                case 5:
+                case 7:
+                case 8:
+                case 10:
+                    currWeekDay = (currWeekDay + 31) % 7;
+                    currMonth += 1;
+                    break;
+                case 4:
+                case 6:
+                case 9:
+                case 11:
+                    currWeekDay = (currWeekDay + 30) % 7;
+                    currMonth += 1;
+                    break;
+                // We handle December separately so we can reset the month to 1 (January) and progress the year
+                case 12:
+                    currWeekDay = (currWeekDay + 31) % 7;
+                    currMonth = 1;
+                    currYear += 1;
+                    break;
+                case 2:
+                    // February is a problem child...
+                    if (currYear % 400 == 0) {
+                        currWeekDay = (currWeekDay + 29) % 7;
+                    } else if (currYear % 100 == 0) {
+                        currWeekDay = (currWeekDay + 28) % 7;
+                    } else if (currYear % 4 == 0) {
+                        currWeekDay = (currWeekDay + 29) % 7;
+                    } else {
+                        currWeekDay = (currWeekDay + 28) % 7;
+                    }
+                    currMonth += 1;
+                    break;
+            }
+        }
+        Console.WriteLine(numSundaysOn1st);
+    }
+}
+
+public class Problem20 : Problem
+{
+    public override void ShowProblemStatement()
+    {
+        Console.WriteLine("n! means n * (n-1) * ... * 3 * 2 * 1.  For example, 10! = 10 * 9 * ... * 3 * 2 * 1 = 3628800,");
+        Console.WriteLine("and the sum of the digits in 10! is 3 + 6 + 2 + 8 + 8 + 0 + 0 = 27.");
+        Console.WriteLine("Find the sum of the digits in the number 100!");
+    }
+
+    public override void ShowSolution()
+    {
+        // 100! is a really, really big number.  Rather than try to store that huge number in a single variable, we store the digits in a list and do the operations on the digits
+        // This makes it easier to add them up, anyways.  (I choose to use a list because I don't know how many digits are in the number 100!.  I could probably google it / calculate
+        // a decent approximation, but that feels like cheating).
+        int currNum = 1;
+        List<int> currDigits = new() {1};
+        while (currNum < 100) {
+            currNum += 1;
+            // We multiply each digit by the number...
+            for (int place = 0; place < currDigits.Count; place++) {
+                currDigits[place] *= currNum;
+            }
+            // Of course, this doesn't do any carrying, so we do that now.  We didn't bother with carrying before because it would mess up digits we hadn't multiplied yet
+            for (int place = 0; place < currDigits.Count; place++) {
+                int tensCarry = (currDigits[place] / 10) % 10;
+                int hundredsCarry = currDigits[place] / 100;
+                // Nested ifs are not good, I know... but it makes this a lot less ugly 
+                if (tensCarry > 0 | hundredsCarry > 0) {
+                    if (place + 1 >= currDigits.Count) { currDigits.Add(0); }
+                    currDigits[place + 1] += tensCarry;
+                    currDigits[place] -= 10 * tensCarry;
+                }
+                if (hundredsCarry > 0) {
+                    if (place + 2 >= currDigits.Count) { currDigits.Add(0); }
+                    currDigits[place + 2] += hundredsCarry;
+                    currDigits[place] -= 100 * hundredsCarry;
+                }
+            }
+        }
+        Console.WriteLine(currDigits.Sum());
+    }
+}
+
+public class Problem21 : Problem
+{
+    public override void ShowProblemStatement()
+    {
+        Console.WriteLine("Let d(n) be defined as the sum of proper divisors of n (numbers LESS than n which divide evenly into n).");
+        Console.WriteLine("If d(a) = b and d(b) = a, where a != b, then a and b are called an 'amicable pair' and each of a and b are called 'amicable numbers.'");
+        Console.WriteLine("For example, the proper divisors of 220 are 1,2,4,5,10,11,20,22,44,55, and 110; therefore d(220) = 284.  The proper divisors of 284 are 1,2,4,71, and 142;");
+        Console.WriteLine("so d(284) = 220.");
+        Console.WriteLine("Evaluate the sum of all the amicable numbers under 10,000");
+    }
+
+    public override void ShowSolution()
+    {
+        Console.WriteLine("We'll also show the pairs, since there are actually very few of them...");
+        List<int> amicableNumbers= new();
+        for (int a = 1; a < 10000; a++) {
+            // Since we're adding amicable numbers in pairs, we will stumble upon numbers we already know to be amicable, so we can save ourselves the work of checking those.
+            if (amicableNumbers.Contains(a)) {
+                continue;
+            }
+            int b = d(a);
+            if (a == b) {
+                continue;
+            } 
+            else if (a == d(b)) {
+                Console.WriteLine($"{a} and {b}");
+                amicableNumbers.Add(a);
+                amicableNumbers.Add(b);
+            }
+        }
+        Console.WriteLine("And the final sum is...");
+        Console.WriteLine(amicableNumbers.Sum());
+    }
+
+    public int d(int N) {
+        int factorSum = 1;
+        for (int potentialFactor = 2; potentialFactor * potentialFactor <= N; potentialFactor++) {
+            if ((N % potentialFactor == 0) && (N / potentialFactor != potentialFactor)) {
+                factorSum += potentialFactor;
+                factorSum += N / potentialFactor;
+            } else if (N % potentialFactor == 0) {
+                // We don't want to count the same factor twice (this case will only occur when N is a perfect square, which is fairly rare for larger numbers, so we check for this last)
+                factorSum += potentialFactor;
+            }
+        }
+        return factorSum;
+    }
+}
+
+public class Problem22 : Problem
+{
+    public override void ShowProblemStatement()
+    {
+        Console.WriteLine("The file Problem22Names.txt (located in the resources folder), is a 46K text file containing over five-thousand first names.  Begin by sorting it into");
+        Console.WriteLine("alphabetical order.  Then give each name a score by adding up the alphabetical value of each letter (A=1, B=2,...) and multiplying by its alphabetical");
+        Console.WriteLine("position in the entire list.");
+        Console.WriteLine("For example, when the list is sorted into alphabetical order, the alphabetical value of each letter added up is 3 + 15 + 12 + 9 + 14 = 53,");
+        Console.WriteLine("and if is the 938th name in the list.  Therefore, COLIN would obtain a score of 938 * 53 = 49714.");
+        Console.WriteLine("What is the total of all the name scores in the file?");
+    }
+
+    public override void ShowSolution()
+    {
+        //========== This first bit is just reading the info from the file and making it usable... nothing too magical =========//
+        string filePath = System.IO.Path.GetFullPath(@"../../../resources/Problem22Names.txt");
+        StreamReader sr = new StreamReader(filePath);
+        string? rawData = sr.ReadLine();
+        string[] names = rawData.Split(",");
+        // A quirk of the data; all the names have quotation marks around them, which would complicate things later, so we remove them.
+        for (int i = 0; i < names.Count(); i++) {
+            names[i] = names[i].Trim('"');
+        }
+        //========== This is where the actual problem starts ==============//
+        Array.Sort(names);
+        int result = 0;
+
+        int alphPlace = 1;
+        foreach (string name in names) {
+            result += alphPlace * GetNameScore(name);
+            alphPlace++;
+        }
+        Console.WriteLine(result);
+    }
+
+    public int GetNameScore(string name) {
+        int result = 0;
+        foreach (char letter in name) {
+            // A trick to avoid writing an ugly function; casting a char to an int gives its ASCII code, which can be shifted to give the A=1, B=2... cypher we want.
+            // I know this because I spent hours trying to figure out why the char '5' did not cast to the integer 5 in another program I was writing :)
+            // Technically we don't have to use the explicit cast below, but without it this looks even more cryptic than it already is, so I include it
+            result += (int)letter - 64;
+        }
+        return result;
+    }
+}
+
+public class Problem23 : Problem
+{
+    public override void ShowProblemStatement()
+    {
+        Console.WriteLine("A perfect number is a number for which the sum of its proper divisors is exactly equal to the number. Ex: 28 = 1 + 2 + 4 + 7 + 14");
+        Console.WriteLine("A number n is called deficient if the sum of its proper divisors is LESS than n, and it is called abundant if that sum is GREATER than n.");
+        Console.WriteLine("A math fact: since 12 is the smallest abundant number (easy to check), the smallest number that can be written as the sum of two abundant numbers is 24.");
+        Console.WriteLine("Furthermore, it can be shown that all integers greater than 28123 can be written as the sum of two abundant numbers. (Proof is left as an exercise for the reader)");
+        Console.WriteLine("Find the sum of all positive integers which cannot be written as the sum of two abundant numbers.");
+    }
+
+    public override void ShowSolution()
+    {
+        // Of course, the math fact reduces the amount of cases we consider from infinity to less than 30,000, which is a pretty good deal 
+        // My chosen strategy will be to find all the abundant numbers <= 28123, and then just check whether each number in the relevant range 
+        // can be written as a sum of numbers in that list.  It seems like we'll have to check if each of those numbers is abundant anyways, so finding/storing them ahead of time
+        // keeps us from constantly rechecking the same numbers for abundancy.
+
+        List<int> abundantNumbers = new();
+        for (int i = 12; i <= 28123; i++) {
+            if (IsAbundant(i)) {
+                abundantNumbers.Add(i);
+            }
+        }
+
+        int result = 0;
+        for (int i = 0; i <= 28123; i++) {
+            if (!IsSummableFromList(i,abundantNumbers)) {
+                result += i;
+            }
+        }
+        Console.WriteLine(result);
+    }
+
+    public bool IsAbundant(int N) {
+        // This is remarkably similar to the d function in Problem21, except we can stop if/when the sum gets larger than our original number since we only care about which one is bigger
+        int factorSum = 1;
+        for (int potentialFactor = 2; potentialFactor * potentialFactor <= N; potentialFactor++) {
+            if ((N % potentialFactor == 0) && (N / potentialFactor != potentialFactor)) {
+                factorSum += potentialFactor;
+                factorSum += N / potentialFactor;
+                if (factorSum > N) {
+                    return true;
+                }
+            }  
+            else if (N % potentialFactor == 0) {
+                factorSum += potentialFactor;
+                if (factorSum > N) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public bool IsSummableFromList(int N, List<int> nums) {
+        // Worth noting; this assumes that the list nums is in ascending order (which it is, in our case), but otherwise should work for any value of N and nums
+        foreach (int num in nums) {
+            if (num > N/2) {
+                return false;
+            }
+            else if (nums.Contains(N - num)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+public class Problem24 : Problem
+{
+    public override void ShowProblemStatement()
+    {
+        Console.WriteLine("A permutation is an ordered arrangement of objects.  For example, 3124 is one possible permutation of the digits 1,2,3, and 4.");
+        Console.WriteLine("If all of the permutations are listed numerically or alphabetically, we call it lexicographic order.  The permutations of 0,1, and 2, listed in lexicographic order, are:");
+        Console.WriteLine("012, 021, 102, 120, 201, 210");
+        Console.WriteLine("What is the millionth lexicographic permutation of the digits 0,1,2,3,4,5,6,7,8, and 9?");
+    }
+
+    public override void ShowSolution()
+    {
+        // Note that there are 10! = 3,628,800 permutations of 10 digits, which is a lot to sift through.  Luckily, we don't actually have to generate a single permutation
+        // to solve this problem!  The nitty gritty details I will save for the code, but the gist is that we can specify each digit one at a time by taking advantage of the way these 
+        // permutations are sorted.  For example, without knowing any of the other digits, if we are given two permutations and their first digits do not match, we can just compare
+        // the first digits and be done.  This separates the set of permutations into 10 "chunks", each of size 9! (since the first digit is specified, there are 9 left to choose from).
+        // We know, then, that the first digit of the millionth permutation cannot be 0.  Why?  Because it would be in the first "chunk", and 9! = 362,800 < 1,000,000.  Similarly, it can't be 9, as
+        // it'd be bigger than all the numbers in the first 9 chunks, so the smallest place it could be is 9 * 9! = 3,265,920 > 1,000,000.  We can find exactly which of these chunks it is in 
+        // by taking 1,000,000 / 9! = 2.755, so we round down to 2.  We can repeat this logic until we've specified each digit!
+
+        int desiredPlace = 1000000 - 1; // We subtract 1 since C# think in terms of 0-index, and this problem assumes 1-index (you can't get 0th place)
+        List<char> availDigits = new List<char> {'0','1','2','3','4','5','6','7','8','9'};
+        string result = "";
+        while (availDigits.Count > 0) {
+            int chunkSize = Factorial(availDigits.Count - 1);
+            int digitIndex = desiredPlace / chunkSize;
+            result += availDigits[digitIndex];
+            availDigits.RemoveAt(digitIndex);
+            desiredPlace -= digitIndex * chunkSize;
+        }
+        Console.WriteLine(result);
+    }
+
+    public int Factorial(int N) {
+        int result = 1;
+        for (int i = 2; i <= N; i++) {
+            result *= i;
+        }
+        return result;
+    }
+}
+
+public class Problem25 : Problem
+{
+    public override void ShowProblemStatement()
+    {
+        Console.WriteLine("The Fibonacci sequence is defined by the recurrence relation: F(n) = F(n-1) + F(n-2), where F1 = 1 and F2 = 1");
+        Console.WriteLine("Hence the first 12 terms would be 1,1,2,3,5,8,13,21,34,55,89,144.");
+        Console.WriteLine("The 12th term is the first term to contain three digits.  What is the index of the first term in the Fibonacci sequence to contain 1000 digits?");
+    }
+
+    public override void ShowSolution()
+    {
+        // Brute forcing this would be easy, and maybe even fairly fast if we used BigInt to store the numbers as they got crazy, but I feel that it may be better to employ
+        // a different method to keep our computer from exploding.  Again, we use the trick of storing individual digits and mimicking addition using that information
+        int[] prevFib = new int[1000];
+        prevFib[0] = 1;
+        int[] currFib = new int[1000];
+        currFib[0] = 1;
+        int[] temp = new int[1000];
+
+        int fibIndex = 2;
+        while (currFib[999] == 0) {
+            temp = DigitArraySum(prevFib,currFib);
+            prevFib = currFib;
+            currFib = temp;
+            fibIndex += 1;
+        }
+        Console.WriteLine(fibIndex);
+    }
+
+    public int[] DigitArraySum(int[] a, int[] b) {
+        // a and b should be the same length, but I don't want to error handle for this one-off function 
+        // Also, there is a risk of index out of range error for the general case, but we should never have that problem because we will just always have our arrays of length 1000
+        // and stop when we get to a number that is actually 1000 digits long.
+        int[] result = new int[a.Length];
+
+        int digitSum;
+        int carry;
+        for (int i = 0; i < a.Count() - 1; i++) {
+            digitSum = a[i] + b[i]; 
+            carry = digitSum / 10;
+            result[i] += digitSum % 10;
+            result[i+1] += carry;
+        }
+        return result;
+    }
+}
+
+public class Problem26 : Problem
+{
+    public override void ShowProblemStatement()
+    {
+        Console.WriteLine("A unit fraction contains 1 in the numerator.  The decimal representation of the unit fractions with denominators 2 to 10 are given:");
+        Console.WriteLine("1/2 = 0.5");
+        Console.WriteLine("1/3 = 0.(3)");
+        Console.WriteLine("1/4 = 0.25");
+        Console.WriteLine("1/5 = 0.2");
+        Console.WriteLine("1/6 = 0.1(6)");
+        Console.WriteLine("1/7 = 0.142857");
+        Console.WriteLine("1/8 = 0.125");
+        Console.WriteLine("1/9 = 0.(1)");
+        Console.WriteLine("1/10 = 0.1");
+        Console.WriteLine("Where 0.1(6) means 0.166666..., and has a 1-digit recurring cycle. It can be seen that 1/7 has a 6-digit recurring cycle.");
+        Console.WriteLine("Find the value of d < 1000 for which 1/d contains the longest recurring cycle in its decimal fraction part.");
+    }
+
+    public override void ShowSolution()
+    {
+        int maxCycle = 0;
+        int maximizer = 1;
+        int currLength;
+        for (int i = 2; i < 1000; i++) {
+            currLength = CycleLength(i);
+            if (currLength > maxCycle) {
+                maxCycle = currLength;
+                maximizer = i;
+            }
+        }
+        Console.WriteLine($"The max cycle in this range has length {maxCycle}, produced by 1/{maximizer}.");
+    }
+
+    public int CycleLength(int N) {
+        List<int> remainders = new();
+        int currRemainder = 1;
+        while (currRemainder != 0 && !remainders.Contains(currRemainder)) {
+            remainders.Add(currRemainder);
+            currRemainder = 10*currRemainder % N;
+        }
+        if (currRemainder == 0) {
+            return 0;
+        } else {
+            return remainders.Count() - Array.IndexOf(remainders.ToArray(),currRemainder);
+        }
+    }
+}
+
+public class Problem27 : Problem
+{
+    public override void ShowProblemStatement()
+    {
+        Console.WriteLine("Euler discovered the remarkable quadratic formula: n^2 + n + 41.");
+        Console.WriteLine("It turns out that the formula will produce 40 primes for the consecutive integer values 0 <= n <= 39.  However, when n = 40, the result is 1681 which is divisible by 41");
+        Console.WriteLine("Another formula, n^2 - 79n + 1601 was discovered, which produces 80 primes for the values 0 <= n <= 79.");
+        Console.WriteLine("Considering quadratics of the form n^2 + an + b where abs(a) < 1000 and abs(b) <= 1000, find the product of the coefficients a and b for the quadratic expression");
+        Console.WriteLine("that produces the maximum number of primes for consecutive values of n starting with n = 0.");
+    }
+
+    public override void ShowSolution()
+    {
+        // Note, for any of these quadratics, f(0) = b.  So b has to be prime off bat.  So, we can reduce the number of cases we need to check greatly by only checking cases where b
+        // is prime (and, for that matter, positive, since negative numbers can't be prime by definition).  To do this, we generate all primes <= 1000 ahead of time.  This will also
+        // help us check if results are prime, since we only have to check for prime factors, at least if the output is less than 1000000.  
+        int N = 1000;
+
+        int maxVal = 0;
+        int maximizerA = 0;
+        int maximizerB = 0;
+
+        int[] primesLessThan1000 = GetPrimesLessThanN(N);
+        foreach (int b in primesLessThan1000) {
+            for (int a = 1-N; a < N; a+=2) {
+                int n = 0;
+                while (CheckPrime(n*n + a*n + b, primesLessThan1000)) {
+                    n++;
+                }
+                if (maxVal < n) {
+                    maxVal = n;
+                    maximizerA = a;
+                    maximizerB = b;
+                }
+            }
+        }
+        Console.WriteLine($"Max prime streak is {maxVal}, produced by a = {maximizerA} and b = {maximizerB}");
+    }
+    
+    public int[] GetPrimesLessThanN(int N) {
+        List<int> listOfPrimes = new List<int> {2};
+        // After 2, we know all of the primes are odd, so we start with 2 already in the list and only check odds forevermore. 
+        for (int k = 3; k < N; k += 2) {
+            foreach (int prime in listOfPrimes) {
+                if (prime * prime > k) {
+                    listOfPrimes.Add(k);
+                    break;
+                }
+                else if (k % prime == 0) {
+                    break;
+                }
+            }
+        }
+        // We return the list as an array, since we will not be editing it.
+        return listOfPrimes.ToArray();
+    }
+
+    public bool CheckPrime(int N, int[] primeReference) {
+        // This function checks if a number is prime, which can operate a bit faster by offering a "primeReference" which tells us the set of primes < some number (in our case, 1000)
+        // We can quickly rule out primality if the number is < 2, so we do
+        if (N < 2) {
+            return false;
+        }
+
+        int maxPrime = primeReference[primeReference.Length-1];
+        // if N <= maxPrime, then we can just look up whether or not it's in the list, since the list should give us every smaller prime
+        if (N <= maxPrime) {
+            return primeReference.Contains(N);
+        } 
+        // Next we check each prime in our list of given primes to see if it's a factor of N.  Of course, if one is, we stop and return false
+        foreach (int prime in primeReference) {
+            if (N < prime * prime) {
+                return true;
+            }
+            else if (N % prime == 0) {
+                return false;
+            }
+        }
+        // If we make it out of the above loop, we have to exhaustively check any remaining factors < sqrt(N) 
+        for (int potFactor = maxPrime + 2; potFactor * potFactor < N; potFactor+=2) {
+            if (N % potFactor == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 }
